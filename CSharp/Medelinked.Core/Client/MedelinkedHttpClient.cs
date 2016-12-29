@@ -457,6 +457,31 @@ namespace Medelinked.Core.Client
 		#region Get Records for User
 
 		/// <summary>
+		/// Get the health score for the user
+		/// </summary>
+		public static async Task<HealthScore> GetHealthScore()
+		{
+			try
+			{
+				HttpResponseMessage msg = await httpClient.GetAsync(ServiceUrl + @"/api/user/healthscore");
+
+				if (msg.IsSuccessStatusCode)
+				{
+					String str = await msg.Content.ReadAsStringAsync();
+					str = CleanWebScriptJson (str);
+					HealthFeed obj = JsonConvert.DeserializeObject<HealthScore>(str);
+					return obj;
+				}
+			}
+			catch (Exception ex) {
+				Debug.Write (ex.ToString ());
+			}
+
+
+			return null;
+		}
+
+		/// <summary>
 		/// Get the health feed for the user
 		/// </summary>
 		public static async Task<HealthFeed> GetHealthFeed()
