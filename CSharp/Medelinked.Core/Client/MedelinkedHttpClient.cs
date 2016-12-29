@@ -469,7 +469,7 @@ namespace Medelinked.Core.Client
 				{
 					String str = await msg.Content.ReadAsStringAsync();
 					str = CleanWebScriptJson (str);
-					HealthFeed obj = JsonConvert.DeserializeObject<HealthScore>(str);
+					HealthScore obj = JsonConvert.DeserializeObject<HealthScore>(str);
 					return obj;
 				}
 			}
