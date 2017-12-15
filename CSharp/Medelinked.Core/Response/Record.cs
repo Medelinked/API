@@ -8,6 +8,8 @@ namespace Medelinked.Core.Response
 		public Record ()
 		{
 			this.ReturnAllRecords = false;
+            Description = new RecordDescription();
+            this.Files = new List<HealthFile>();
 		}
 
 		public string Username { get; set; }
@@ -23,15 +25,8 @@ namespace Medelinked.Core.Response
 		public RecordDescription Description { get; set; }
 		public bool ReturnAllRecords { get; set; }
 		public string ScanOrXRayLink { get; set; }
-		public List<MedicalCode> Codes { get; set; }
-		public string ExternalID { get; set; }
-	}
-	
-	public class MedicalCode
-	{
-		public string Code { get; set; }
-		public string Origin { get; set; }
-		public string Scheme { get; set; }
+        public string OriginalDocument { get; set; }
+        public List<Guid> LinkedRecords { get; set; }
 	}
 }
 

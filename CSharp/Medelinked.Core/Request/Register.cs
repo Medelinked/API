@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Medelinked.Core.Request
 {
@@ -6,6 +7,7 @@ namespace Medelinked.Core.Request
 	{
 		public Register ()
 		{
+            Tags = new List<string>();
 		}
 
 		public string Title { get; set; }
@@ -21,6 +23,9 @@ namespace Medelinked.Core.Request
 		public string Sex { get; set; }
 		public bool SendRegistrationEmail { get; set; }
 		public string ProviderKey { get; set; }
+        public bool SimpleRegistration { get; set; }
+
+        public List<string> Tags { get; set; }
 	}
 }
 

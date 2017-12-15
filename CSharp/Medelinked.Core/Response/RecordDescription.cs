@@ -10,11 +10,13 @@ namespace Medelinked.Core.Response
 
 		public string What { get; set; }
 		public string Reaction { get; set; }
-		public string First { get; set; }
+		public string FirstObserved { get; set; }
+        public string First { get; set; }
 		public string When { get; set; }
 		public string Description { get; set; }
 		public string DoseValue { get; set; }
 		public string StrengthValue { get; set; }
+        public string Strength { get; set; }
 		public string OnsetDate { get; set; }
 		public string Who { get; set; }
 		public string Status { get; set; }
@@ -56,6 +58,13 @@ namespace Medelinked.Core.Response
 		public string Details { get; set; }
 		public string Ward { get; set; }
 		public string Summary { get; set; }
+		public string FatMassWeight { get; set; }
+		public string FatFreeMass { get; set; }
+		public string Location { get; set; }
+		public string Why { get; set; }
+		public string Hdl { get; set; }
+		public string Ldl { get; set; }
+		public string Triglyceride { get; set; }
 	}
 }
 

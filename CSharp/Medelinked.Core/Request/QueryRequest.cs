@@ -5,6 +5,11 @@ namespace Medelinked.Core.Request
 {
 	public class QueryRequest
 	{
+        public QueryRequest()
+        {
+            this.QueryParameters = new List<QueryKeyValuePair>();
+        }
+
 		public string Username { get; set; }
 		public string QueryName { get; set; }
 		public List<QueryKeyValuePair> QueryParameters { get; set; }	

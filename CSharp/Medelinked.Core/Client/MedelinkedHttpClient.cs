@@ -19,13 +19,13 @@ namespace Medelinked.Core.Client
 	public static class MedelinkedHttpClient
 	{
 		//CookieContainer as we need the authentication cookies to be carried across all requests
-		private static CookieContainer AuthCookies;
+		public static CookieContainer AuthCookies;
 
 		//Use the same instance of the client for all calls made
 		private static HttpClient httpClient;
 
 		//The provider key required for authentication
-		private static string ProviderKey = "SampleProviderKey";
+	    private static string ProviderKey = "Sample Provider Key";
 
 		//The core service URL
 		private static string ServiceUrl = "https://app.medelinked.com"; 
@@ -48,7 +48,7 @@ namespace Medelinked.Core.Client
 			{
 				if (String.IsNullOrEmpty (UserCredentials.ProviderKey))
 					UserCredentials.ProviderKey = ProviderKey;
-
+				
 				AuthCookies = new CookieContainer();
 				string postBody = "{\"UserCredentials\":" + JsonConvert.SerializeObject(UserCredentials) + "}"; 
 				httpClient = new HttpClient (new HttpClientHandler {
@@ -94,7 +94,7 @@ namespace Medelinked.Core.Client
 				});
 
 				httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json")); 
-				HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/user/Register", new StringContent(postBody, Encoding.UTF8, "application/json"));
+				HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/user/register", new StringContent(postBody, Encoding.UTF8, "application/json"));
 
 				if (msg.IsSuccessStatusCode)
 				{
@@ -175,6 +175,47 @@ namespace Medelinked.Core.Client
 			return null;
 		}
 
+
+        /// <summary>
+        /// Logins the user with an external token.
+        /// </summary>
+        /// <returns>The user with token.</returns>
+        /// <param name="UserCredentials">User credentials.</param>
+        public static async Task<User> LoginUserWithToken(LoginModel UserCredentials)
+        {
+			try
+			{
+				if (String.IsNullOrEmpty(UserCredentials.ProviderKey))
+					UserCredentials.ProviderKey = ProviderKey;
+
+				AuthCookies = new CookieContainer();
+				string postBody = "{\"UserCredentials\":" + JsonConvert.SerializeObject(UserCredentials) + "}";
+				httpClient = new HttpClient(new HttpClientHandler
+				{
+					CookieContainer = AuthCookies, // Use a durable store for authentication cookies
+					UseCookies = true
+				});
+
+				httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+				HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/user/authenticatewithtoken", new StringContent(postBody, Encoding.UTF8, "application/json"));
+
+				if (msg.IsSuccessStatusCode)
+				{
+					String str = await msg.Content.ReadAsStringAsync();
+					str = CleanWebScriptJson(str);
+					User obj = JsonConvert.DeserializeObject<User>(str);
+					return obj;
+				}
+			}
+			catch (Exception ex)
+			{
+				Debug.Write(ex.ToString());
+			}
+
+
+			return null;
+        }
+
 		/// <summary>
 		/// Logs outs the user.
 		/// </summary>
@@ -198,9 +239,8 @@ namespace Medelinked.Core.Client
 		#region Change Password
 
 		/// <summary>
-		/// Login as a user
+		/// Change user's password
 		/// </summary>
-		/// <param name="loginCredentials">Login credentials.</param>
 		public static async Task<User> ChangePasswordInAppAsync(ChangePasswordModel PasswordDetails)
 		{
 			try
@@ -228,9 +268,60 @@ namespace Medelinked.Core.Client
 		}
 
 		/// <summary>
+		/// Change the username for the user
+		/// </summary>
+		public static async Task<HealthData> ChangeUsernameAsync(ChangeUsernameRequest UsernameDetails)
+		{
+			try
+			{
+				string postBody = "{\"UsernameDetails\":" + JsonConvert.SerializeObject(UsernameDetails) + "}";
+				HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/user/changeusername", new StringContent(postBody, Encoding.UTF8, "application/json"));
+
+				if (msg.IsSuccessStatusCode)
+				{
+					String str = await msg.Content.ReadAsStringAsync();
+					str = CleanWebScriptJson(str);
+					HealthData obj = JsonConvert.DeserializeObject<HealthData>(str);
+					return obj;
+				}
+			}
+			catch (Exception ex)
+			{
+				Debug.Write(ex.ToString());
+			}
+
+
+			return null;
+		}
+
+		/// <summary>
+		/// Delete a user
+		/// </summary>
+		public async Task<User> DeleteAccount()
+		{
+			try
+			{
+				HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/user/removeaccount", new StringContent("", Encoding.UTF8, "application/json"));
+
+				if (msg.IsSuccessStatusCode)
+				{
+					String str = await msg.Content.ReadAsStringAsync();
+					str = CleanWebScriptJson(str);
+					User obj = JsonConvert.DeserializeObject<User>(str);
+					return obj;
+				}
+			}
+			catch (Exception ex)
+			{
+				Debug.Write(ex.ToString());
+			}
+
+			return null;
+		}
+
+		/// <summary>
 		/// Log Out as a user
 		/// </summary>
-		/// <param name="loginCredentials">Login credentials.</param>
 		public static async Task<User> LogOutAsync()
 		{
 			try
@@ -285,10 +376,90 @@ namespace Medelinked.Core.Client
 			return null;
 		}
 
+        /// <summary>
+        /// Get details of the current user
+        /// </summary>
+        /// <returns></returns>
+        public static async Task<User> CurrentUser()
+        {
+            try
+            {
+                HttpResponseMessage msg = await httpClient.GetAsync(ServiceUrl + @"/api/user/me");
+
+                if (msg.IsSuccessStatusCode)
+                {
+                    String str = await msg.Content.ReadAsStringAsync();
+                    str = CleanWebScriptJson(str);
+                    User obj = JsonConvert.DeserializeObject<User>(str);
+                    return obj;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Write(ex.ToString());
+            }
+
+            return null;
+        }
 
 		#endregion
 
 		#region Add a Record
+
+		/// <summary>
+		/// Update user details
+		/// </summary>
+		public static async Task<User> UpdatePersonalDetails(User PersonalDetails)
+		{
+			try
+			{
+				string postBody = "{\"PersonalDetails\":" + JsonConvert.SerializeObject(PersonalDetails) + "}";
+				HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/user/updatepersonaldetails", new StringContent(postBody, Encoding.UTF8, "application/json"));
+
+				if (msg.IsSuccessStatusCode)
+				{
+					String str = await msg.Content.ReadAsStringAsync();
+					str = CleanWebScriptJson(str);
+					User obj = JsonConvert.DeserializeObject<User>(str);
+					return obj;
+				}
+			}
+			catch (Exception ex)
+			{
+				Debug.Write(ex.ToString());
+			}
+
+
+			return null;
+		}
+
+		/// <summary>
+		/// Update wellness settings
+		/// </summary>
+		public static async Task<WellnessSettings> UpdateWellnessSettings(WellnessSettings WellnessSettingsData)
+		{
+			try
+			{
+				string postBody = "{\"WellnessSettings\":" + JsonConvert.SerializeObject(WellnessSettingsData) + "}";
+				HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/user/updatewellnesssettings", new StringContent(postBody, Encoding.UTF8, "application/json"));
+
+				if (msg.IsSuccessStatusCode)
+				{
+					String str = await msg.Content.ReadAsStringAsync();
+					str = CleanWebScriptJson(str);
+					WellnessSettings obj = JsonConvert.DeserializeObject<WellnessSettings>(str);
+					return obj;
+				}
+			}
+			catch (Exception ex)
+			{
+				Debug.Write(ex.ToString());
+			}
+
+
+			return null;
+		}
+
 
 		/// <summary>
 		/// Add a record
@@ -317,6 +488,33 @@ namespace Medelinked.Core.Client
 		}
 
 		/// <summary>
+		/// Add a record using the new AutoDetect feature
+		/// </summary>
+		/// <param name="ImageData">Image to parse</param>
+		public static async Task<HealthData> UseAutoDetect(string ImageData)
+		{
+			try
+			{
+				string postBody = "{\"ImageData\":\"" + ImageData + "\"}"; 
+
+				HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/user/useautodetect", new StringContent(postBody, Encoding.UTF8, "application/json"));
+
+				if (msg.IsSuccessStatusCode)
+				{
+					String str = await msg.Content.ReadAsStringAsync();
+					str = CleanWebScriptJson (str);
+					HealthData obj = JsonConvert.DeserializeObject<HealthData>(str);
+					return obj;
+				}
+			}
+			catch (Exception ex) {
+				Debug.Write (ex.ToString ());
+			}
+
+			return null;
+		}
+
+		/// <summary>
 		/// Add a record
 		/// </summary>
 		/// <param name="newRecord">Record details</param>
@@ -337,6 +535,33 @@ namespace Medelinked.Core.Client
 			}
 			catch (Exception ex) {
 				Debug.Write (ex.ToString ());
+			}
+
+			return null;
+		}
+
+		/// <summary>
+		/// Delete multiple records
+		/// </summary>
+		/// <param name="RecordsToDelete">Record details</param>
+		public static async Task<HealthData> DeleteRecords(List<Record> ExistingRecords)
+		{
+			try
+			{
+				string postBody = "{\"RecordsToDelete\":" + JsonConvert.SerializeObject(ExistingRecords) + "}";
+				HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/user/deleterecords", new StringContent(postBody, Encoding.UTF8, "application/json"));
+
+				if (msg.IsSuccessStatusCode)
+				{
+					String str = await msg.Content.ReadAsStringAsync();
+					str = CleanWebScriptJson(str);
+					HealthData obj = JsonConvert.DeserializeObject<HealthData>(str);
+					return obj;
+				}
+			}
+			catch (Exception ex)
+			{
+				Debug.Write(ex.ToString());
 			}
 
 			return null;
@@ -395,27 +620,52 @@ namespace Medelinked.Core.Client
 		}
 
 		/// <summary>
-		/// Add a record using the new AutoDetect feature
+		/// Adds a tag against the user
 		/// </summary>
-		/// <param name="ImageData">Image to parse</param>
-		public static async Task<HealthData> UseAutoDetect(string ImageData)
+		public static async Task<HealthData> AddTag(string TagValue)
 		{
 			try
 			{
-				string postBody = "{\"ImageData\":\"" + ImageData + "\"}"; 
-
-				HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/user/useautodetect", new StringContent(postBody, Encoding.UTF8, "application/json"));
+				string postBody = "{\"TagValue\":\"" + TagValue + "\"}";
+				HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/user/addtag", new StringContent(postBody, Encoding.UTF8, "application/json"));
 
 				if (msg.IsSuccessStatusCode)
 				{
 					String str = await msg.Content.ReadAsStringAsync();
-					str = CleanWebScriptJson (str);
+					str = CleanWebScriptJson(str);
 					HealthData obj = JsonConvert.DeserializeObject<HealthData>(str);
 					return obj;
 				}
 			}
-			catch (Exception ex) {
-				Debug.Write (ex.ToString ());
+			catch (Exception ex)
+			{
+				Debug.Write(ex.ToString());
+			}
+
+			return null;
+		}
+
+		/// <summary>
+		/// Removes a tag against the user
+		/// </summary>
+		public static async Task<HealthData> RemoveTag(string TagValue)
+		{
+			try
+			{
+				string postBody = "{\"TagValue\":\"" + TagValue + "\"}";
+				HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/user/removetag", new StringContent(postBody, Encoding.UTF8, "application/json"));
+
+				if (msg.IsSuccessStatusCode)
+				{
+					String str = await msg.Content.ReadAsStringAsync();
+					str = CleanWebScriptJson(str);
+					HealthData obj = JsonConvert.DeserializeObject<HealthData>(str);
+					return obj;
+				}
+			}
+			catch (Exception ex)
+			{
+				Debug.Write(ex.ToString());
 			}
 
 			return null;
@@ -457,6 +707,32 @@ namespace Medelinked.Core.Client
 		#region Get Records for User
 
 		/// <summary>
+		/// Get the wellness settings for the user
+		/// </summary>
+		public static async Task<WellnessSettings> GetWellnessSettings()
+		{
+			try
+			{
+				HttpResponseMessage msg = await httpClient.GetAsync(ServiceUrl + @"/api/user/wellnesssettings");
+
+				if (msg.IsSuccessStatusCode)
+				{
+					String str = await msg.Content.ReadAsStringAsync();
+					str = CleanWebScriptJson(str);
+					WellnessSettings obj = JsonConvert.DeserializeObject<WellnessSettings>(str);
+					return obj;
+				}
+			}
+			catch (Exception ex)
+			{
+				Debug.Write(ex.ToString());
+			}
+
+
+			return null;
+		}
+
+		/// <summary>
 		/// Get the health score for the user
 		/// </summary>
 		public static async Task<HealthScore> GetHealthScore()
@@ -468,13 +744,14 @@ namespace Medelinked.Core.Client
 				if (msg.IsSuccessStatusCode)
 				{
 					String str = await msg.Content.ReadAsStringAsync();
-					str = CleanWebScriptJson (str);
+					str = CleanWebScriptJson(str);
 					HealthScore obj = JsonConvert.DeserializeObject<HealthScore>(str);
 					return obj;
 				}
 			}
-			catch (Exception ex) {
-				Debug.Write (ex.ToString ());
+			catch (Exception ex)
+			{
+				Debug.Write(ex.ToString());
 			}
 
 
@@ -530,6 +807,58 @@ namespace Medelinked.Core.Client
 
 			return null;
 		}
+			
+        /// <summary>
+        /// Synchronise devices
+        /// </summary>
+        public static async Task<HealthData> SynchroniseDevices()
+        {
+            try
+            {
+                HttpResponseMessage msg = await httpClient.GetAsync(ServiceUrl + @"/api/user/synchronisedevices");
+
+                if (msg.IsSuccessStatusCode)
+                {
+                    String str = await msg.Content.ReadAsStringAsync();
+                    str = CleanWebScriptJson(str);
+                    HealthData obj = JsonConvert.DeserializeObject<HealthData>(str);
+                    return obj;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Write(ex.ToString());
+            }
+
+
+            return null;
+        }
+
+        /// <summary>
+        /// Get the records for the current user
+        /// </summary>
+        public static async Task<DeviceData> GetConnectedDevices()
+        {
+            try
+            {
+                HttpResponseMessage msg = await httpClient.GetAsync(ServiceUrl + @"/api/user/connecteddevices");
+
+                if (msg.IsSuccessStatusCode)
+                {
+                    String str = await msg.Content.ReadAsStringAsync();
+                    str = CleanWebScriptJson(str);
+                    DeviceData obj = JsonConvert.DeserializeObject<DeviceData>(str);
+                    return obj;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Write(ex.ToString());
+            }
+
+
+            return null;
+        }
 
 		/// <summary>
 		/// Get all of the records for the current user - this includes new record types
@@ -627,87 +956,86 @@ namespace Medelinked.Core.Client
 		}
 		#endregion
 
-        #region Symptom Checker
+		#region Symptom Checker
 
 		/// <summary>
-				/// Get the symptoms for the symptom checker
-				/// </summary>
-				public static async Task<List<HealthItem>> GetSymptomList()
+		/// Get the symptoms for the symptom checker
+		/// </summary>
+		public static async Task<List<HealthItem>> GetSymptomList()
+		{
+			try
+			{
+				HttpResponseMessage msg = await httpClient.GetAsync(ServiceUrl + @"/api/user/listallsymptoms");
+
+				if (msg.IsSuccessStatusCode)
 				{
-					try
-					{
-						HttpResponseMessage msg = await httpClient.GetAsync(ServiceUrl + @"/api/user/listallsymptoms");
-
-						if (msg.IsSuccessStatusCode)
-						{
-							String str = await msg.Content.ReadAsStringAsync();
-							str = CleanWebScriptJson (str);
-							List<HealthItem> obj = JsonConvert.DeserializeObject<List<HealthItem>>(str);
-							return obj;
-						}
-					}
-					catch (Exception ex) {
-						Debug.Write (ex.ToString ());
-					}
-
-
-					return null;
+					String str = await msg.Content.ReadAsStringAsync();
+					str = CleanWebScriptJson (str);
+					List<HealthItem> obj = JsonConvert.DeserializeObject<List<HealthItem>>(str);
+					return obj;
 				}
+			}
+			catch (Exception ex) {
+				Debug.Write (ex.ToString ());
+			}
 
-				/// <summary>
-				/// Check symptoms
-				/// </summary>
-				/// <param name="Symptoms">Symptoms to check</param>
-				public static async Task<SymptomDiagnoses> CheckSymptoms(SymptomsToCheck Symptoms)
+
+			return null;
+		}
+
+		/// <summary>
+		/// Check symptoms
+		/// </summary>
+		/// <param name="Symptoms">Symptoms to check</param>
+		public static async Task<SymptomDiagnoses> CheckSymptoms(SymptomsToCheck Symptoms)
+		{
+			try
+			{
+				string postBody = "{\"SymptomDetails\":" + JsonConvert.SerializeObject(Symptoms) + "}";  
+				HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/user/diagnosesymptoms", new StringContent(postBody, Encoding.UTF8, "application/json"));
+
+				if (msg.IsSuccessStatusCode)
 				{
-					try
-					{
-						string postBody = "{\"SymptomDetails\":" + JsonConvert.SerializeObject(Symptoms) + "}";  
-						HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/user/diagnosesymptoms", new StringContent(postBody, Encoding.UTF8, "application/json"));
-
-						if (msg.IsSuccessStatusCode)
-						{
-							String str = await msg.Content.ReadAsStringAsync();
-							str = CleanWebScriptJson (str);
-							SymptomDiagnoses obj = JsonConvert.DeserializeObject<SymptomDiagnoses>(str);
-							return obj;
-						}
-					}
-					catch (Exception ex) {
-						Debug.Write (ex.ToString ());
-					}
-
-					return null;
+					String str = await msg.Content.ReadAsStringAsync();
+					str = CleanWebScriptJson (str);
+					SymptomDiagnoses obj = JsonConvert.DeserializeObject<SymptomDiagnoses>(str);
+					return obj;
 				}
+			}
+			catch (Exception ex) {
+				Debug.Write (ex.ToString ());
+			}
 
-				/// <summary>
-				/// Get details of the diagnosis
-				/// </summary>
-				/// <param name="DiagnosisID">Image to parse</param>
-				public static async Task<DiagnosisDetail> GetDiagnosisDetails(string DiagnosisID)
+			return null;
+		}
+
+		/// <summary>
+		/// Get details of the diagnosis
+		/// </summary>
+		/// <param name="DiagnosisID">Image to parse</param>
+		public static async Task<DiagnosisDetail> GetDiagnosisDetails(string DiagnosisID)
+		{
+			try
+			{
+				HttpResponseMessage msg = await httpClient.GetAsync(ServiceUrl + @"/api/user/diagnosisinformation?DiagnosisID=" + DiagnosisID);
+
+				if (msg.IsSuccessStatusCode)
 				{
-					try
-					{
-						HttpResponseMessage msg = await httpClient.GetAsync(ServiceUrl + @"/api/user/diagnosisinformation?DiagnosisID=" + DiagnosisID);
-
-						if (msg.IsSuccessStatusCode)
-						{
-							String str = await msg.Content.ReadAsStringAsync();
-							str = CleanWebScriptJson (str);
-							DiagnosisDetail obj = JsonConvert.DeserializeObject<DiagnosisDetail>(str);
-							return obj;
-						}
-					}
-					catch (Exception ex) {
-						Debug.Write (ex.ToString ());
-					}
-
-					return null;
+					String str = await msg.Content.ReadAsStringAsync();
+					str = CleanWebScriptJson (str);
+					DiagnosisDetail obj = JsonConvert.DeserializeObject<DiagnosisDetail>(str);
+					return obj;
 				}
+			}
+			catch (Exception ex) {
+				Debug.Write (ex.ToString ());
+			}
 
+			return null;
+		}
 
 		#endregion
-        
+
 		#region Share records with a provider
 
 		/// <summary>

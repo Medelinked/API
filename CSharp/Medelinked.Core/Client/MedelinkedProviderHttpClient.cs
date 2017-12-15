@@ -25,7 +25,7 @@ namespace Medelinked.Core.Client
 		private static HttpClient httpClient;
 
 		//The provider key required for authentication
-		private static string ProviderKey = "SampleProviderKey";
+		private static string ProviderKey = "a3dSOEtTNTAwVjM4";
 
 		//The core service URL
 		private static string ServiceUrl = "https://app.medelinked.com"; 
@@ -98,7 +98,7 @@ namespace Medelinked.Core.Client
 			try
 			{
 				string postBody = "{\"RecordDetails\":" + JsonConvert.SerializeObject(newRecord) + "}";  
-				HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/provider/addrecordtouseraccount", new StringContent(postBody, Encoding.UTF8, "application/json"));
+				HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/provider/addrecordstouseraccount", new StringContent(postBody, Encoding.UTF8, "application/json"));
 
 				if (msg.IsSuccessStatusCode)
 				{
@@ -115,32 +115,32 @@ namespace Medelinked.Core.Client
 			return null;
 		}
 
-		/// <summary>
-		/// Add a record
-		/// </summary>
-		/// <param name="newRecord">Record details</param>
-		public static async Task<HealthData> CommitRecords(List<Record> newRecords)
-		{
-			try
-			{
-				string postBody = "{\"RecordDetails\":" + JsonConvert.SerializeObject(newRecords) + "}";  
-				HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/provider/addrecordstouseraccount", new StringContent(postBody, Encoding.UTF8, "application/json"));
+        /// <summary>
+        /// Add a record
+        /// </summary>
+        /// <param name="newRecord">Record details</param>
+        public static async Task<HealthData> CommitRecords(List<Record> newRecords)
+        {
+            try
+            {
+                string postBody = "{\"RecordDetails\":" + JsonConvert.SerializeObject(newRecords) + "}";
+                HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/provider/addrecordtouseraccount", new StringContent(postBody, Encoding.UTF8, "application/json"));
 
-				if (msg.IsSuccessStatusCode)
-				{
-					String str = await msg.Content.ReadAsStringAsync();
-					str = CleanWebScriptJson (str);
-					HealthData obj = JsonConvert.DeserializeObject<HealthData>(str);
-					return obj;
-				}
-			}
-			catch (Exception ex) {
-				Debug.Write (ex.ToString ());
-			}
+                if (msg.IsSuccessStatusCode)
+                {
+                    String str = await msg.Content.ReadAsStringAsync();
+                    str = CleanWebScriptJson(str);
+                    HealthData obj = JsonConvert.DeserializeObject<HealthData>(str);
+                    return obj;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Write(ex.ToString());
+            }
 
-			return null;
-		}
-		
+            return null;
+        }
 		/// <summary>
 		/// Adds an alert against a record type
 		/// </summary>
@@ -199,10 +199,159 @@ namespace Medelinked.Core.Client
 			return null;
 		}
 
+        /// <summary>
+        /// Get the shared records for the current user
+        /// </summary>
+        public static async Task<HealthData> GetUserRecords(LoginModel UserDetails)
+        {
+            try
+            {
+                string postBody = "{\"UserDetails\":" + JsonConvert.SerializeObject(UserDetails) + "}";
+                HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/provider/getuserrecords", new StringContent(postBody, Encoding.UTF8, "application/json"));
+
+                if (msg.IsSuccessStatusCode)
+                {
+                    String str = await msg.Content.ReadAsStringAsync();
+                    str = CleanWebScriptJson(str);
+                    HealthData obj = JsonConvert.DeserializeObject<HealthData>(str);
+                    return obj;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Write(ex.ToString());
+            }
+
+
+            return null;
+        }
+
+		/// <summary>
+		/// Get anonymised data for your users
+		/// </summary>
+		public static async Task<AnonymisedRecords> GetAnonymisedRecords(AnonymisedDataRequest DataRequest)
+		{
+			try
+			{
+				string postBody = "{\"DataRequest\":" + JsonConvert.SerializeObject(DataRequest) + "}";
+				HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/provider/getanonymiseddata", new StringContent(postBody, Encoding.UTF8, "application/json"));
+
+				if (msg.IsSuccessStatusCode)
+				{
+					String str = await msg.Content.ReadAsStringAsync();
+					str = CleanWebScriptJson(str);
+					AnonymisedRecords obj = JsonConvert.DeserializeObject<AnonymisedRecords>(str);
+					return obj;
+				}
+			}
+			catch (Exception ex)
+			{
+				Debug.Write(ex.ToString());
+			}
+
+
+			return null;
+		}
+
+		/// <summary>
+		/// Remove connection with a particular user
+		/// </summary>
+		public static async Task<User> RemoveUserConnection(string Username)
+		{
+			try
+			{
+				string postBody = "{\"Username\":\"" + Username + "\"}";
+				HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/provider/removeuserconnection", new StringContent(postBody, Encoding.UTF8, "application/json"));
+
+				if (msg.IsSuccessStatusCode)
+				{
+					String str = await msg.Content.ReadAsStringAsync();
+					str = CleanWebScriptJson(str);
+					User obj = JsonConvert.DeserializeObject<User>(str);
+					return obj;
+				}
+			}
+			catch (Exception ex)
+			{
+				Debug.Write(ex.ToString());
+			}
+
+
+			return null;
+		}
+
+        /// <summary>
+        /// Remove all users for a provider
+        /// </summary>
+        public static async Task<HealthData> RemoveAllUsers()
+        {
+            try
+            {
+                HttpResponseMessage msg = await httpClient.PostAsync(ServiceUrl + @"/api/provider/removealluseraccounts", new StringContent("", Encoding.UTF8, "application/json"));
+
+                if (msg.IsSuccessStatusCode)
+                {
+                    String str = await msg.Content.ReadAsStringAsync();
+                    str = CleanWebScriptJson(str);
+                    HealthData obj = JsonConvert.DeserializeObject<HealthData>(str);
+                    return obj;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Write(ex.ToString());
+            }
+
+
+            return null;
+        }
+
 		#endregion
 
 		
+        #region User Feed and Content
 
+        /// <summary>
+        /// Get the articles from the feed
+        /// </summary>
+        public static async Task<HealthFeed> GetHealthContent()
+        {
+            try
+            {
+                if (httpClient == null)
+                {
+                    AuthCookies = new CookieContainer();
+
+                    httpClient = new HttpClient(new HttpClientHandler
+                    {
+                        CookieContainer = AuthCookies, // Use a durable store for authentication cookies
+                        UseCookies = true
+                    });
+
+                    httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                }
+
+                HttpResponseMessage msg = await httpClient.GetAsync(ServiceUrl + @"/api/provider/healthcontent");
+
+                if (msg.IsSuccessStatusCode)
+                {
+                    String str = await msg.Content.ReadAsStringAsync();
+                    str = CleanWebScriptJson(str);
+                    HealthFeed obj = JsonConvert.DeserializeObject<HealthFeed>(str);
+                    return obj;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Write(ex.ToString());
+            }
+
+
+            return null;
+        }
+
+        #endregion
 		
 
 		#region Send a message to a user
